@@ -4,6 +4,7 @@ import { UserMenu } from "@/components/dashboard/user-menu";
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/dashboard/workouts", label: "Workouts" },
+  { href: "/dashboard/closet", label: "Closet" },
 ];
 
 export function DashboardNav({ email, fullName }: { email: string; fullName?: string }) {

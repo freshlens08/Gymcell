@@ -2,20 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-
-async function requireUserId() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  return { supabase, userId: user.id };
-}
+import { requireUserId } from "@/lib/supabase/require-user";
 
 export async function createWorkout() {
   const { supabase, userId } = await requireUserId();

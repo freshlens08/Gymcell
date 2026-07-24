@@ -14,6 +14,83 @@ export type Database = {
   }
   public: {
     Tables: {
+      closet_items: {
+        Row: {
+          added_at: string
+          clothing_item_id: string
+          id: string
+          is_favorite: boolean
+          photo_url: string | null
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          clothing_item_id: string
+          id?: string
+          is_favorite?: boolean
+          photo_url?: string | null
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          clothing_item_id?: string
+          id?: string
+          is_favorite?: boolean
+          photo_url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "closet_items_clothing_item_id_fkey"
+            columns: ["clothing_item_id"]
+            isOneToOne: false
+            referencedRelation: "clothing_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "closet_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clothing_items: {
+        Row: {
+          category: Database["public"]["Enums"]["clothing_category"]
+          created_at: string
+          created_by: string | null
+          id: string
+          is_custom: boolean
+          name: string
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["clothing_category"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_custom?: boolean
+          name: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["clothing_category"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_custom?: boolean
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clothing_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercises: {
         Row: {
           category: Database["public"]["Enums"]["exercise_category"]
@@ -119,6 +196,41 @@ export type Database = {
             columns: ["workout_exercise_id"]
             isOneToOne: false
             referencedRelation: "workout_exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_splits: {
+        Row: {
+          day_of_week: number
+          id: string
+          label: string | null
+          muscle_focus: Database["public"]["Enums"]["exercise_category"] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          day_of_week: number
+          id?: string
+          label?: string | null
+          muscle_focus?: Database["public"]["Enums"]["exercise_category"] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          day_of_week?: number
+          id?: string
+          label?: string | null
+          muscle_focus?: Database["public"]["Enums"]["exercise_category"] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_splits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -240,6 +352,12 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      clothing_category:
+        | "top"
+        | "bottom"
+        | "outerwear"
+        | "footwear"
+        | "accessory"
       equipment_type:
         | "barbell"
         | "dumbbell"
@@ -397,6 +515,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      clothing_category: [
+        "top",
+        "bottom",
+        "outerwear",
+        "footwear",
+        "accessory",
+      ],
       equipment_type: [
         "barbell",
         "dumbbell",
