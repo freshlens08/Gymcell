@@ -10,11 +10,13 @@ import { cn } from "@/lib/utils";
 export function ClosetItemCard({
   id,
   name,
+  brand,
   photoUrl,
   isFavorite,
 }: {
   id: string;
   name: string;
+  brand: string | null;
   photoUrl: string | null;
   isFavorite: boolean;
 }) {
@@ -40,7 +42,10 @@ export function ClosetItemCard({
         </Button>
       </div>
       <div className="flex items-center justify-between gap-2 p-2">
-        <p className="truncate text-sm">{name}</p>
+        <div className="min-w-0">
+          {brand && <p className="truncate text-xs font-medium text-primary">{brand}</p>}
+          <p className="truncate text-sm">{name}</p>
+        </div>
         <Button
           type="button"
           variant="ghost"

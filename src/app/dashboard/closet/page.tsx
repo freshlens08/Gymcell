@@ -13,6 +13,11 @@ function formatFocusLabel(value: string) {
   return value.replace("_", " ").replace(/^./, (char) => char.toUpperCase());
 }
 
+function formatFocusList(values: string[]) {
+  if (values.length === 0) return null;
+  return values.map(formatFocusLabel).join(", ");
+}
+
 export default async function ClosetPage() {
   const supabase = await createClient();
   const {
@@ -22,10 +27,10 @@ export default async function ClosetPage() {
   const [{ data: closetItems }, { data: catalog }, { data: splits }] = await Promise.all([
     supabase
       .from("closet_items")
-      .select("id, photo_url, is_favorite, clothing_item_id, clothing_items(name, category)")
+      .select("id, photo_url, is_favorite, clothing_item_id, clothing_items(name, brand, category)")
       .eq("user_id", user!.id)
       .order("added_at", { ascending: false }),
-    supabase.from("clothing_items").select("id, name, category").order("name"),
+    supabase.from("clothing_items").select("id, name, brand, category").order("name"),
     supabase
       .from("training_splits")
       .select("day_of_week, muscle_focus")
@@ -34,8 +39,9 @@ export default async function ClosetPage() {
 
   const items = (closetItems ?? []) as ClosetItemWithClothing[];
   const todayDayOfWeek = new Date().getDay();
-  const todaysFocus = splits?.find((split) => split.day_of_week === todayDayOfWeek)?.muscle_focus ?? null;
-  const preference = getOutfitPreference(todaysFocus);
+  const todaysFocuses =
+    splits?.find((split) => split.day_of_week === todayDayOfWeek)?.muscle_focus ?? [];
+  const preference = getOutfitPreference(todaysFocuses);
   const suggestedTop = pickOutfitItem(items, "top", preference.topPreference);
   const suggestedBottom = pickOutfitItem(items, "bottom", preference.bottomPreference);
 
@@ -54,7 +60,7 @@ export default async function ClosetPage() {
 
       <TodaysOutfitCard
         dayLabel={DAY_LABELS[todayDayOfWeek]}
-        focusLabel={todaysFocus ? formatFocusLabel(todaysFocus) : null}
+        focusLabel={formatFocusList(todaysFocuses)}
         top={suggestedTop}
         bottom={suggestedBottom}
       />
@@ -90,6 +96,7 @@ export default async function ClosetPage() {
               key={item.id}
               id={item.id}
               name={item.clothing_items?.name ?? "Item"}
+              brand={item.clothing_items?.brand ?? null}
               photoUrl={item.photo_url}
               isFavorite={item.is_favorite}
             />

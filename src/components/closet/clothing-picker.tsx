@@ -29,7 +29,12 @@ import type { Database } from "@/lib/supabase/database.types";
 
 type ClothingCategory = Database["public"]["Enums"]["clothing_category"];
 
-type ClothingItem = { id: string; name: string; category: ClothingCategory };
+type ClothingItem = {
+  id: string;
+  name: string;
+  brand: string | null;
+  category: ClothingCategory;
+};
 
 const CATEGORY_OPTIONS: { value: ClothingCategory; label: string }[] = [
   { value: "top", label: "Top" },
@@ -60,9 +65,13 @@ export function ClothingPicker({
   );
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return available;
-    const q = query.toLowerCase();
-    return available.filter((item) => item.name.toLowerCase().includes(q));
+    const words = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    if (words.length === 0) return available;
+
+    return available.filter((item) => {
+      const haystack = `${item.brand ?? ""} ${item.name} ${item.category}`.toLowerCase();
+      return words.every((word) => haystack.includes(word));
+    });
   }, [available, query]);
 
   function handleSelect(clothingItemId: string) {
@@ -126,8 +135,13 @@ export function ClothingPicker({
                   onClick={() => handleSelect(item.id)}
                   className="flex items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-accent disabled:opacity-50"
                 >
-                  <span>{item.name}</span>
-                  <span className="text-xs text-muted-foreground capitalize">
+                  <span>
+                    {item.brand && (
+                      <span className="font-medium text-primary">{item.brand} </span>
+                    )}
+                    {item.name}
+                  </span>
+                  <span className="shrink-0 pl-3 text-xs text-muted-foreground capitalize">
                     {item.category}
                   </span>
                 </button>

@@ -8,7 +8,7 @@ export type ClosetItemWithClothing = {
   clothing_item_id: string;
   photo_url: string | null;
   is_favorite: boolean;
-  clothing_items: { name: string; category: ClothingCategory } | null;
+  clothing_items: { name: string; brand: string | null; category: ClothingCategory } | null;
 };
 
 const UPPER_BODY_FOCUSES = new Set<ExerciseCategory>([
@@ -46,9 +46,12 @@ const GENERAL_DAY: OutfitPreference = {
   bottomPreference: ["Shorts", "Joggers"],
 };
 
-export function getOutfitPreference(muscleFocus: ExerciseCategory | null): OutfitPreference {
-  if (muscleFocus && UPPER_BODY_FOCUSES.has(muscleFocus)) return UPPER_BODY_DAY;
-  if (muscleFocus && LOWER_BODY_FOCUSES.has(muscleFocus)) return LOWER_BODY_DAY;
+export function getOutfitPreference(muscleFocuses: ExerciseCategory[]): OutfitPreference {
+  const hasUpper = muscleFocuses.some((focus) => UPPER_BODY_FOCUSES.has(focus));
+  const hasLower = muscleFocuses.some((focus) => LOWER_BODY_FOCUSES.has(focus));
+
+  if (hasUpper && !hasLower) return UPPER_BODY_DAY;
+  if (hasLower && !hasUpper) return LOWER_BODY_DAY;
   return GENERAL_DAY;
 }
 

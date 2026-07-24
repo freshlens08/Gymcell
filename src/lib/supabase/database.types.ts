@@ -58,6 +58,7 @@ export type Database = {
       }
       clothing_items: {
         Row: {
+          brand: string | null
           category: Database["public"]["Enums"]["clothing_category"]
           created_at: string
           created_by: string | null
@@ -66,6 +67,7 @@ export type Database = {
           name: string
         }
         Insert: {
+          brand?: string | null
           category: Database["public"]["Enums"]["clothing_category"]
           created_at?: string
           created_by?: string | null
@@ -74,6 +76,7 @@ export type Database = {
           name: string
         }
         Update: {
+          brand?: string | null
           category?: Database["public"]["Enums"]["clothing_category"]
           created_at?: string
           created_by?: string | null
@@ -205,7 +208,7 @@ export type Database = {
           day_of_week: number
           id: string
           label: string | null
-          muscle_focus: Database["public"]["Enums"]["exercise_category"] | null
+          muscle_focus: Database["public"]["Enums"]["exercise_category"][]
           updated_at: string
           user_id: string
         }
@@ -213,7 +216,7 @@ export type Database = {
           day_of_week: number
           id?: string
           label?: string | null
-          muscle_focus?: Database["public"]["Enums"]["exercise_category"] | null
+          muscle_focus?: Database["public"]["Enums"]["exercise_category"][]
           updated_at?: string
           user_id: string
         }
@@ -221,7 +224,7 @@ export type Database = {
           day_of_week?: number
           id?: string
           label?: string | null
-          muscle_focus?: Database["public"]["Enums"]["exercise_category"] | null
+          muscle_focus?: Database["public"]["Enums"]["exercise_category"][]
           updated_at?: string
           user_id?: string
         }

@@ -98,14 +98,14 @@ export async function removeFromCloset(closetItemId: string) {
 
 export async function upsertTrainingSplit(
   dayOfWeek: number,
-  muscleFocus: ExerciseCategory | null,
+  muscleFocuses: ExerciseCategory[],
 ) {
   const { supabase, userId } = await requireUserId();
 
   const { error } = await supabase
     .from("training_splits")
     .upsert(
-      { user_id: userId, day_of_week: dayOfWeek, muscle_focus: muscleFocus },
+      { user_id: userId, day_of_week: dayOfWeek, muscle_focus: muscleFocuses },
       { onConflict: "user_id,day_of_week" },
     );
 

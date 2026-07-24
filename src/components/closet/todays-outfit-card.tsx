@@ -22,7 +22,12 @@ function OutfitSlot({ item, fallbackLabel }: { item: ClosetItemWithClothing | nu
           <Shirt className="size-6 text-muted-foreground" />
         )}
       </div>
-      <p className="text-sm font-medium">{item.clothing_items?.name}</p>
+      <div>
+        {item.clothing_items?.brand && (
+          <p className="text-xs font-medium text-primary">{item.clothing_items.brand}</p>
+        )}
+        <p className="text-sm font-medium">{item.clothing_items?.name}</p>
+      </div>
     </div>
   );
 }
