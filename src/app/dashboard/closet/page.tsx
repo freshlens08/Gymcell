@@ -27,10 +27,12 @@ export default async function ClosetPage() {
   const [{ data: closetItems }, { data: catalog }, { data: splits }] = await Promise.all([
     supabase
       .from("closet_items")
-      .select("id, photo_url, is_favorite, clothing_item_id, clothing_items(name, brand, category)")
+      .select(
+        "id, photo_url, is_favorite, clothing_item_id, clothing_items(name, brand, category, image_url)",
+      )
       .eq("user_id", user!.id)
       .order("added_at", { ascending: false }),
-    supabase.from("clothing_items").select("id, name, brand, category").order("name"),
+    supabase.from("clothing_items").select("id, name, brand, category, image_url").order("name"),
     supabase
       .from("training_splits")
       .select("day_of_week, muscle_focus")
@@ -98,6 +100,7 @@ export default async function ClosetPage() {
               name={item.clothing_items?.name ?? "Item"}
               brand={item.clothing_items?.brand ?? null}
               photoUrl={item.photo_url}
+              catalogImageUrl={item.clothing_items?.image_url ?? null}
               isFavorite={item.is_favorite}
             />
           ))}

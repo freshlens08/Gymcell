@@ -16,8 +16,13 @@ function OutfitSlot({ item, fallbackLabel }: { item: ClosetItemWithClothing | nu
   return (
     <div className="flex flex-1 flex-col items-center gap-2 rounded-lg border border-border py-4 text-center">
       <div className="relative flex size-14 items-center justify-center rounded-md bg-muted">
-        {item.photo_url ? (
-          <Image src={item.photo_url} alt={item.clothing_items?.name ?? ""} fill className="rounded-md object-cover" />
+        {item.photo_url ?? item.clothing_items?.image_url ? (
+          <Image
+            src={(item.photo_url ?? item.clothing_items?.image_url)!}
+            alt={item.clothing_items?.name ?? ""}
+            fill
+            className="rounded-md object-cover"
+          />
         ) : (
           <Shirt className="size-6 text-muted-foreground" />
         )}

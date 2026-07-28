@@ -8,7 +8,12 @@ export type ClosetItemWithClothing = {
   clothing_item_id: string;
   photo_url: string | null;
   is_favorite: boolean;
-  clothing_items: { name: string; brand: string | null; category: ClothingCategory } | null;
+  clothing_items: {
+    name: string;
+    brand: string | null;
+    category: ClothingCategory;
+    image_url: string | null;
+  } | null;
 };
 
 const UPPER_BODY_FOCUSES = new Set<ExerciseCategory>([

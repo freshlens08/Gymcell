@@ -12,21 +12,24 @@ export function ClosetItemCard({
   name,
   brand,
   photoUrl,
+  catalogImageUrl,
   isFavorite,
 }: {
   id: string;
   name: string;
   brand: string | null;
   photoUrl: string | null;
+  catalogImageUrl: string | null;
   isFavorite: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
+  const displayImage = photoUrl ?? catalogImageUrl;
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card">
       <div className="relative flex aspect-square items-center justify-center bg-muted">
-        {photoUrl ? (
-          <Image src={photoUrl} alt={name} fill className="object-cover" />
+        {displayImage ? (
+          <Image src={displayImage} alt={name} fill className="object-cover" />
         ) : (
           <Shirt className="size-10 text-muted-foreground" />
         )}

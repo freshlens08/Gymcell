@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useMemo, useState, useTransition } from "react";
-import { Camera, Plus, Search } from "lucide-react";
+import Image from "next/image";
+import { Camera, Plus, Search, Shirt } from "lucide-react";
 import {
   addCustomItem,
   addFromCatalog,
@@ -34,6 +35,7 @@ type ClothingItem = {
   name: string;
   brand: string | null;
   category: ClothingCategory;
+  image_url: string | null;
 };
 
 const CATEGORY_OPTIONS: { value: ClothingCategory; label: string }[] = [
@@ -133,9 +135,16 @@ export function ClothingPicker({
                   type="button"
                   disabled={isPending}
                   onClick={() => handleSelect(item.id)}
-                  className="flex items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-accent disabled:opacity-50"
+                  className="flex items-center gap-3 rounded-md px-3 py-2 text-left text-sm hover:bg-accent disabled:opacity-50"
                 >
-                  <span>
+                  <div className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
+                    {item.image_url ? (
+                      <Image src={item.image_url} alt={item.name} fill className="object-cover" />
+                    ) : (
+                      <Shirt className="size-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <span className="flex-1">
                     {item.brand && (
                       <span className="font-medium text-primary">{item.brand} </span>
                     )}
