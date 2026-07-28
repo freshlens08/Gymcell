@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { RotateCw } from "lucide-react";
-import { logQuickLift } from "@/app/dashboard/actions";
-import { MUSCLE_REGIONS, type MuscleRegion } from "@/lib/muscle-map";
-import { getTier, TIER_COLORS, TIER_LABELS } from "@/lib/strength-tiers";
+import { useMemo, useState, useTransition } from "react";
+import Model, { type IMuscleStats } from "react-body-highlighter";
+import { RotateCw, Search } from "lucide-react";
+import { logQuickLift, setMuscleExercisePreference } from "@/app/dashboard/actions";
+import { type MuscleRegionState } from "@/lib/muscle-map";
+import { TIER_COLORS, TIER_LABELS, TIER_ORDER, tierRank } from "@/lib/strength-tiers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,248 +16,87 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import type { Database } from "@/lib/supabase/database.types";
 
-type PersonalRecord = { exercise_name: string; weight: number };
+type ExerciseCategory = Database["public"]["Enums"]["exercise_category"];
+type CatalogExercise = { id: string; name: string; category: ExerciseCategory };
 
-const NEUTRAL_FILL = "var(--muted)";
-const DECOR_FILL = "color-mix(in oklch, var(--muted), var(--background) 40%)";
+const BODY_COLOR = "color-mix(in oklch, var(--muted), var(--background) 20%)";
+const HIGHLIGHTED_COLORS = TIER_ORDER.map((tier) => TIER_COLORS[tier]);
 
-function regionInfo(region: MuscleRegion, records: PersonalRecord[]) {
-  const record = records.find((r) => r.exercise_name === region.exerciseName);
-  if (!record) return { tier: null, weight: null };
-  return { tier: getTier(region.exerciseName, record.weight), weight: record.weight };
-}
-
-function RegionShape({
-  region,
-  records,
-  selected,
-  onSelect,
-  children,
+export function BodyDiagram({
+  states,
+  catalog,
 }: {
-  region: MuscleRegion;
-  records: PersonalRecord[];
-  selected: boolean;
-  onSelect: (region: MuscleRegion) => void;
-  children: (fill: string) => React.ReactNode;
+  states: MuscleRegionState[];
+  catalog: CatalogExercise[];
 }) {
-  const { tier } = regionInfo(region, records);
-  const fill = tier ? TIER_COLORS[tier] : NEUTRAL_FILL;
-
-  return (
-    <g
-      role="button"
-      tabIndex={0}
-      aria-label={region.label}
-      onClick={() => onSelect(region)}
-      onKeyDown={(event) => event.key === "Enter" && onSelect(region)}
-      className="cursor-pointer outline-none"
-      opacity={selected ? 0.7 : 1}
-    >
-      {children(fill)}
-    </g>
-  );
-}
-
-function FrontBody({
-  records,
-  selectedId,
-  onSelect,
-}: {
-  records: PersonalRecord[];
-  selectedId: string | null;
-  onSelect: (region: MuscleRegion) => void;
-}) {
-  const byId = (id: string) => MUSCLE_REGIONS.find((r) => r.id === id)!;
-
-  return (
-    <svg viewBox="0 0 200 360" className="h-full w-full">
-      {/* head + neck */}
-      <circle cx="100" cy="26" r="18" fill={DECOR_FILL} />
-      <rect x="91" y="42" width="18" height="12" fill={DECOR_FILL} />
-
-      <RegionShape
-        region={byId("shoulders")}
-        records={records}
-        selected={selectedId === "shoulders"}
-        onSelect={onSelect}
-      >
-        {(fill) => (
-          <>
-            <ellipse cx="64" cy="72" rx="16" ry="15" fill={fill} className="transition-colors" />
-            <ellipse cx="136" cy="72" rx="16" ry="15" fill={fill} className="transition-colors" />
-          </>
-        )}
-      </RegionShape>
-
-      <RegionShape
-        region={byId("chest")}
-        records={records}
-        selected={selectedId === "chest"}
-        onSelect={onSelect}
-      >
-        {(fill) => (
-          <rect x="82" y="62" width="36" height="48" rx="14" fill={fill} className="transition-colors" />
-        )}
-      </RegionShape>
-
-      {/* abs (decorative) */}
-      <rect x="85" y="112" width="30" height="45" rx="8" fill={DECOR_FILL} />
-
-      <RegionShape
-        region={byId("biceps")}
-        records={records}
-        selected={selectedId === "biceps"}
-        onSelect={onSelect}
-      >
-        {(fill) => (
-          <>
-            <ellipse cx="46" cy="100" rx="13" ry="26" fill={fill} className="transition-colors" />
-            <ellipse cx="154" cy="100" rx="13" ry="26" fill={fill} className="transition-colors" />
-          </>
-        )}
-      </RegionShape>
-
-      {/* forearms + hands (decorative) */}
-      <rect x="34" y="122" width="16" height="50" rx="8" fill={DECOR_FILL} />
-      <rect x="150" y="122" width="16" height="50" rx="8" fill={DECOR_FILL} />
-      <circle cx="42" cy="178" r="8" fill={DECOR_FILL} />
-      <circle cx="158" cy="178" r="8" fill={DECOR_FILL} />
-
-      {/* hips (decorative) */}
-      <rect x="78" y="155" width="44" height="30" rx="12" fill={DECOR_FILL} />
-
-      <RegionShape
-        region={byId("quads")}
-        records={records}
-        selected={selectedId === "quads"}
-        onSelect={onSelect}
-      >
-        {(fill) => (
-          <>
-            <ellipse cx="88" cy="225" rx="18" ry="45" fill={fill} className="transition-colors" />
-            <ellipse cx="112" cy="225" rx="18" ry="45" fill={fill} className="transition-colors" />
-          </>
-        )}
-      </RegionShape>
-
-      {/* shins + feet (decorative) */}
-      <rect x="78" y="268" width="16" height="65" rx="7" fill={DECOR_FILL} />
-      <rect x="106" y="268" width="16" height="65" rx="7" fill={DECOR_FILL} />
-      <ellipse cx="86" cy="340" rx="12" ry="7" fill={DECOR_FILL} />
-      <ellipse cx="114" cy="340" rx="12" ry="7" fill={DECOR_FILL} />
-    </svg>
-  );
-}
-
-function BackBody({
-  records,
-  selectedId,
-  onSelect,
-}: {
-  records: PersonalRecord[];
-  selectedId: string | null;
-  onSelect: (region: MuscleRegion) => void;
-}) {
-  const byId = (id: string) => MUSCLE_REGIONS.find((r) => r.id === id)!;
-
-  return (
-    <svg viewBox="0 0 200 360" className="h-full w-full">
-      {/* head + neck */}
-      <circle cx="100" cy="26" r="18" fill={DECOR_FILL} />
-      <rect x="91" y="42" width="18" height="12" fill={DECOR_FILL} />
-
-      {/* shoulder caps (decorative on back view) */}
-      <ellipse cx="64" cy="72" rx="16" ry="15" fill={DECOR_FILL} />
-      <ellipse cx="136" cy="72" rx="16" ry="15" fill={DECOR_FILL} />
-
-      <RegionShape
-        region={byId("back")}
-        records={records}
-        selected={selectedId === "back"}
-        onSelect={onSelect}
-      >
-        {(fill) => (
-          <rect x="78" y="62" width="44" height="95" rx="16" fill={fill} className="transition-colors" />
-        )}
-      </RegionShape>
-
-      <RegionShape
-        region={byId("triceps")}
-        records={records}
-        selected={selectedId === "triceps"}
-        onSelect={onSelect}
-      >
-        {(fill) => (
-          <>
-            <ellipse cx="46" cy="100" rx="13" ry="26" fill={fill} className="transition-colors" />
-            <ellipse cx="154" cy="100" rx="13" ry="26" fill={fill} className="transition-colors" />
-          </>
-        )}
-      </RegionShape>
-
-      {/* forearms + hands (decorative) */}
-      <rect x="34" y="122" width="16" height="50" rx="8" fill={DECOR_FILL} />
-      <rect x="150" y="122" width="16" height="50" rx="8" fill={DECOR_FILL} />
-      <circle cx="42" cy="178" r="8" fill={DECOR_FILL} />
-      <circle cx="158" cy="178" r="8" fill={DECOR_FILL} />
-
-      {/* hips (decorative) */}
-      <rect x="78" y="155" width="44" height="30" rx="12" fill={DECOR_FILL} />
-
-      <RegionShape
-        region={byId("hamstrings")}
-        records={records}
-        selected={selectedId === "hamstrings"}
-        onSelect={onSelect}
-      >
-        {(fill) => (
-          <>
-            <ellipse cx="88" cy="215" rx="18" ry="50" fill={fill} className="transition-colors" />
-            <ellipse cx="112" cy="215" rx="18" ry="50" fill={fill} className="transition-colors" />
-          </>
-        )}
-      </RegionShape>
-
-      <RegionShape
-        region={byId("calves")}
-        records={records}
-        selected={selectedId === "calves"}
-        onSelect={onSelect}
-      >
-        {(fill) => (
-          <>
-            <ellipse cx="84" cy="305" rx="13" ry="32" fill={fill} className="transition-colors" />
-            <ellipse cx="116" cy="305" rx="13" ry="32" fill={fill} className="transition-colors" />
-          </>
-        )}
-      </RegionShape>
-
-      {/* feet (decorative) */}
-      <ellipse cx="86" cy="340" rx="12" ry="7" fill={DECOR_FILL} />
-      <ellipse cx="114" cy="340" rx="12" ry="7" fill={DECOR_FILL} />
-    </svg>
-  );
-}
-
-export function BodyDiagram({ records }: { records: PersonalRecord[] }) {
   const [flipped, setFlipped] = useState(false);
-  const [activeRegion, setActiveRegion] = useState<MuscleRegion | null>(null);
+  const [activeState, setActiveState] = useState<MuscleRegionState | null>(null);
+  const [selectedExercise, setSelectedExercise] = useState<{ id: string; name: string } | null>(
+    null,
+  );
+  const [query, setQuery] = useState("");
   const [weight, setWeight] = useState("");
   const [reps, setReps] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const current = activeRegion ? regionInfo(activeRegion, records) : null;
+  const libraryData = useMemo(
+    () =>
+      states
+        .filter((s) => s.tier !== null && s.exerciseName)
+        .map((s) => ({
+          name: s.exerciseName!,
+          muscles: [s.region.id],
+          frequency: tierRank(s.tier!),
+        })),
+    [states],
+  );
 
-  function handleSave() {
-    if (!activeRegion || !weight) return;
-    startTransition(async () => {
-      await logQuickLift(activeRegion.exerciseName, Number(weight), reps ? Number(reps) : 1);
-      setActiveRegion(null);
-      setWeight("");
-      setReps("");
+  function handleMuscleClick(stat: IMuscleStats) {
+    const state = states.find((s) => s.region.id === stat.muscle);
+    if (!state) return;
+    setActiveState(state);
+    setSelectedExercise(
+      state.exerciseId && state.exerciseName
+        ? { id: state.exerciseId, name: state.exerciseName }
+        : null,
+    );
+    setQuery("");
+    setWeight("");
+    setReps("");
+  }
+
+  function closeDialog() {
+    setActiveState(null);
+    setSelectedExercise(null);
+  }
+
+  function handlePickExercise(exercise: CatalogExercise) {
+    if (!activeState) return;
+    setSelectedExercise({ id: exercise.id, name: exercise.name });
+    startTransition(() => {
+      setMuscleExercisePreference(activeState.region.id, exercise.id);
     });
   }
+
+  function handleSaveWeight() {
+    if (!selectedExercise || !weight) return;
+    startTransition(async () => {
+      await logQuickLift(selectedExercise.id, Number(weight), reps ? Number(reps) : 1);
+      closeDialog();
+    });
+  }
+
+  const filteredCatalog = useMemo(() => {
+    if (!activeState) return [];
+    const inCategory = catalog.filter(
+      (item) => item.category === activeState.region.exerciseCategory,
+    );
+    if (!query.trim()) return inCategory;
+    const q = query.toLowerCase();
+    return inCategory.filter((item) => item.name.toLowerCase().includes(q));
+  }, [activeState, catalog, query]);
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -269,7 +109,7 @@ export function BodyDiagram({ records }: { records: PersonalRecord[] }) {
         </Button>
       </div>
 
-      <div style={{ perspective: "1200px" }} className="h-80 w-48">
+      <div style={{ perspective: "1200px" }} className="h-80 w-56">
         <div
           style={{
             transformStyle: "preserve-3d",
@@ -280,11 +120,22 @@ export function BodyDiagram({ records }: { records: PersonalRecord[] }) {
             height: "100%",
           }}
         >
-          <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden" }}>
-            <FrontBody
-              records={records}
-              selectedId={activeRegion?.view === "front" ? activeRegion.id : null}
-              onSelect={setActiveRegion}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backfaceVisibility: "hidden",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <Model
+              type="anterior"
+              data={libraryData}
+              bodyColor={BODY_COLOR}
+              highlightedColors={HIGHLIGHTED_COLORS}
+              onClick={handleMuscleClick}
+              svgStyle={{ width: "auto", height: "100%" }}
             />
           </div>
           <div
@@ -293,61 +144,121 @@ export function BodyDiagram({ records }: { records: PersonalRecord[] }) {
               inset: 0,
               backfaceVisibility: "hidden",
               transform: "rotateY(180deg)",
+              display: "flex",
+              justifyContent: "center",
             }}
           >
-            <BackBody
-              records={records}
-              selectedId={activeRegion?.view === "back" ? activeRegion.id : null}
-              onSelect={setActiveRegion}
+            <Model
+              type="posterior"
+              data={libraryData}
+              bodyColor={BODY_COLOR}
+              highlightedColors={HIGHLIGHTED_COLORS}
+              onClick={handleMuscleClick}
+              svgStyle={{ width: "auto", height: "100%" }}
             />
           </div>
         </div>
       </div>
 
-      <Dialog open={activeRegion !== null} onOpenChange={(open) => !open && setActiveRegion(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{activeRegion?.label}</DialogTitle>
-            <DialogDescription>
-              {activeRegion?.exerciseName}
-              {current?.tier && (
-                <>
-                  {" "}
-                  — current: <span style={{ color: TIER_COLORS[current.tier] }}>{TIER_LABELS[current.tier]}</span>{" "}
-                  ({current.weight} lbs)
-                </>
-              )}
-            </DialogDescription>
-          </DialogHeader>
+      <Dialog open={activeState !== null} onOpenChange={(open) => !open && closeDialog()}>
+        <DialogContent className="max-h-[80vh] gap-4">
+          {selectedExercise ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>{activeState?.region.label}</DialogTitle>
+                <DialogDescription>
+                  {selectedExercise.name}
+                  {activeState?.tier && (
+                    <>
+                      {" "}
+                      — current:{" "}
+                      <span style={{ color: TIER_COLORS[activeState.tier] }}>
+                        {TIER_LABELS[activeState.tier]}
+                      </span>{" "}
+                      ({activeState.weight} lbs)
+                    </>
+                  )}
+                </DialogDescription>
+              </DialogHeader>
 
-          <div className="flex items-end gap-3">
-            <div className="flex flex-1 flex-col gap-2">
-              <Label htmlFor="quick-log-weight">Weight (lbs)</Label>
-              <Input
-                id="quick-log-weight"
-                type="number"
-                inputMode="decimal"
-                value={weight}
-                onChange={(event) => setWeight(event.target.value)}
-                autoFocus
-              />
-            </div>
-            <div className="flex w-24 flex-col gap-2">
-              <Label htmlFor="quick-log-reps">Reps</Label>
-              <Input
-                id="quick-log-reps"
-                type="number"
-                inputMode="numeric"
-                placeholder="1"
-                value={reps}
-                onChange={(event) => setReps(event.target.value)}
-              />
-            </div>
-          </div>
+              <div className="flex items-end gap-3">
+                <div className="flex flex-1 flex-col gap-2">
+                  <Label htmlFor="quick-log-weight">Weight (lbs)</Label>
+                  <Input
+                    id="quick-log-weight"
+                    type="number"
+                    inputMode="decimal"
+                    value={weight}
+                    onChange={(event) => setWeight(event.target.value)}
+                    autoFocus
+                  />
+                </div>
+                <div className="flex w-24 flex-col gap-2">
+                  <Label htmlFor="quick-log-reps">Reps</Label>
+                  <Input
+                    id="quick-log-reps"
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="1"
+                    value={reps}
+                    onChange={(event) => setReps(event.target.value)}
+                  />
+                </div>
+              </div>
 
-          <Button type="button" disabled={!weight || isPending} onClick={handleSave}>
-            {isPending ? "Saving…" : "Save"}
-          </Button>
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+                  onClick={() => setSelectedExercise(null)}
+                >
+                  Change exercise
+                </button>
+              </div>
+
+              <Button type="button" disabled={!weight || isPending} onClick={handleSaveWeight}>
+                {isPending ? "Saving…" : "Save"}
+              </Button>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle>Choose a {activeState?.region.label} exercise</DialogTitle>
+                <DialogDescription>
+                  Pick what you want to track for this muscle.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="relative">
+                <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search exercises…"
+                  className="pl-9"
+                  autoFocus
+                />
+              </div>
+
+              <div className="-mx-1 flex max-h-72 flex-col gap-1 overflow-y-auto px-1">
+                {filteredCatalog.length === 0 && (
+                  <p className="py-8 text-center text-sm text-muted-foreground">
+                    No exercises found.
+                  </p>
+                )}
+                {filteredCatalog.map((exercise) => (
+                  <button
+                    key={exercise.id}
+                    type="button"
+                    onClick={() => handlePickExercise(exercise)}
+                    className="rounded-md px-3 py-2 text-left text-sm hover:bg-accent"
+                  >
+                    {exercise.name}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>

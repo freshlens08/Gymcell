@@ -135,6 +135,45 @@ export type Database = {
           },
         ]
       }
+      muscle_exercise_preferences: {
+        Row: {
+          exercise_id: string
+          id: string
+          muscle_slug: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          exercise_id: string
+          id?: string
+          muscle_slug: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          exercise_id?: string
+          id?: string
+          muscle_slug?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "muscle_exercise_preferences_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "muscle_exercise_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

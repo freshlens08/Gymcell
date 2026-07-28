@@ -3,18 +3,23 @@
 import { revalidatePath } from "next/cache";
 import { requireUserId } from "@/lib/supabase/require-user";
 
-export async function logQuickLift(exerciseName: string, weight: number, reps: number) {
+export async function setMuscleExercisePreference(muscleSlug: string, exerciseId: string) {
   const { supabase, userId } = await requireUserId();
 
-  const { data: exercise, error: exerciseError } = await supabase
-    .from("exercises")
-    .select("id")
-    .eq("name", exerciseName)
-    .single();
+  const { error } = await supabase
+    .from("muscle_exercise_preferences")
+    .upsert(
+      { user_id: userId, muscle_slug: muscleSlug, exercise_id: exerciseId },
+      { onConflict: "user_id,muscle_slug" },
+    );
 
-  if (exerciseError || !exercise) {
-    throw new Error(exerciseError?.message ?? `Unknown exercise: ${exerciseName}`);
-  }
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/dashboard");
+}
+
+export async function logQuickLift(exerciseId: string, weight: number, reps: number) {
+  const { supabase, userId } = await requireUserId();
 
   const { data: workout, error: workoutError } = await supabase
     .from("workouts")
@@ -28,7 +33,7 @@ export async function logQuickLift(exerciseName: string, weight: number, reps: n
 
   const { data: workoutExercise, error: weError } = await supabase
     .from("workout_exercises")
-    .insert({ workout_id: workout.id, exercise_id: exercise.id, order_index: 0 })
+    .insert({ workout_id: workout.id, exercise_id: exerciseId, order_index: 0 })
     .select("id")
     .single();
 
