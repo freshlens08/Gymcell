@@ -139,23 +139,56 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          current_weight_lbs: number | null
+          experience_level:
+            | Database["public"]["Enums"]["experience_level"]
+            | null
           full_name: string | null
+          goal_weight_lbs: number | null
+          height_inches: number | null
           id: string
+          onboarding_completed_at: string | null
           updated_at: string
+          workout_location:
+            | Database["public"]["Enums"]["workout_location"]
+            | null
+          workouts_per_week: number | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          current_weight_lbs?: number | null
+          experience_level?:
+            | Database["public"]["Enums"]["experience_level"]
+            | null
           full_name?: string | null
+          goal_weight_lbs?: number | null
+          height_inches?: number | null
           id: string
+          onboarding_completed_at?: string | null
           updated_at?: string
+          workout_location?:
+            | Database["public"]["Enums"]["workout_location"]
+            | null
+          workouts_per_week?: number | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          current_weight_lbs?: number | null
+          experience_level?:
+            | Database["public"]["Enums"]["experience_level"]
+            | null
           full_name?: string | null
+          goal_weight_lbs?: number | null
+          height_inches?: number | null
           id?: string
+          onboarding_completed_at?: string | null
           updated_at?: string
+          workout_location?:
+            | Database["public"]["Enums"]["workout_location"]
+            | null
+          workouts_per_week?: number | null
         }
         Relationships: []
       }
@@ -391,6 +424,8 @@ export type Database = {
         | "calves"
         | "olympic"
         | "mobility"
+      experience_level: "beginner" | "intermediate" | "advanced"
+      workout_location: "home" | "gym" | "both"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -557,6 +592,8 @@ export const Constants = {
         "olympic",
         "mobility",
       ],
+      experience_level: ["beginner", "intermediate", "advanced"],
+      workout_location: ["home", "gym", "both"],
     },
   },
 } as const

@@ -16,6 +16,16 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("onboarding_completed_at")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.onboarding_completed_at) {
+    redirect("/onboarding");
+  }
+
   return (
     <div className="flex flex-1 flex-col">
       <DashboardNav email={user.email ?? ""} fullName={user.user_metadata?.full_name} />

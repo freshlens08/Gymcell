@@ -1,15 +1,7 @@
-import Link from "next/link";
-import { Dumbbell } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardContent } from "@/components/ui/card";
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BodyDiagram } from "@/components/dashboard/body-diagram";
+import { MuscleRankings } from "@/components/dashboard/muscle-rankings";
 
 function startOfWeek() {
   const now = new Date();
@@ -26,7 +18,7 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ count: totalCount }, { count: weekCount }, { data: recentWorkouts }] =
+  const [{ count: totalCount }, { count: weekCount }, { data: personalRecords }] =
     await Promise.all([
       supabase
         .from("workouts")
@@ -38,12 +30,17 @@ export default async function DashboardPage() {
         .eq("user_id", user!.id)
         .gte("started_at", startOfWeek()),
       supabase
-        .from("workouts")
-        .select("id, name, started_at, completed_at")
-        .eq("user_id", user!.id)
-        .order("started_at", { ascending: false })
-        .limit(5),
+        .from("personal_records")
+        .select("exercise_name, estimated_1rm")
+        .eq("user_id", user!.id),
     ]);
+
+  const records = (personalRecords ?? [])
+    .filter(
+      (record): record is { exercise_name: string; estimated_1rm: number } =>
+        record.exercise_name !== null && record.estimated_1rm !== null,
+    )
+    .map((record) => ({ exercise_name: record.exercise_name, weight: record.estimated_1rm }));
 
   return (
     <div className="flex flex-col gap-6">
@@ -67,43 +64,25 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {recentWorkouts && recentWorkouts.length === 0 && (
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
-              <Dumbbell className="size-6 text-primary" />
-            </div>
-            <p className="font-medium">No workouts logged yet</p>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              Your training history, PRs, and progress will show up here once you log your
-              first workout.
-            </p>
+          <CardHeader>
+            <CardTitle className="text-base">Body Map</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BodyDiagram records={records} />
           </CardContent>
         </Card>
-      )}
 
-      {recentWorkouts && recentWorkouts.length > 0 && (
-        <div className="flex flex-col gap-3">
-          <h2 className="text-sm font-medium text-muted-foreground">Recent workouts</h2>
-          {recentWorkouts.map((workout) => (
-            <Link key={workout.id} href={`/dashboard/workouts/${workout.id}`}>
-              <Card className="transition-colors hover:border-primary/50">
-                <CardContent className="flex items-center justify-between py-4">
-                  <div>
-                    <p className="font-medium">{workout.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatDate(workout.started_at)}
-                    </p>
-                  </div>
-                  <span className="text-xs font-medium text-muted-foreground uppercase">
-                    {workout.completed_at ? "Completed" : "In progress"}
-                  </span>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Muscle Rankings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MuscleRankings records={records} />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
