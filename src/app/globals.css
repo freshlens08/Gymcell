@@ -128,3 +128,28 @@
     @apply font-sans;
   }
 }
+/* PinPoint golf tracker: fairway-night theme scoped to /pinpoint. */
+.pinpoint {
+  --background: oklch(0.155 0.02 165);
+  --foreground: oklch(0.97 0.01 160);
+  --card: oklch(0.2 0.025 165);
+  --card-foreground: oklch(0.97 0.01 160);
+  --popover: oklch(0.21 0.025 165);
+  --popover-foreground: oklch(0.97 0.01 160);
+  --primary: oklch(0.82 0.18 152);
+  --primary-foreground: oklch(0.2 0.05 160);
+  --secondary: oklch(0.26 0.03 165);
+  --secondary-foreground: oklch(0.97 0.01 160);
+  --muted: oklch(0.25 0.025 165);
+  --muted-foreground: oklch(0.72 0.03 160);
+  --accent: oklch(0.7 0.18 38);
+  --accent-foreground: oklch(0.2 0.05 40);
+  --destructive: oklch(0.7 0.19 25);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.82 0.18 152 / 50%);
+  --chart-1: oklch(0.82 0.18 152);
+  --radius: 0.875rem;
+  background: var(--background);
+  color: var(--foreground);
+}
