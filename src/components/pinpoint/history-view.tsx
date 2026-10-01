@@ -48,7 +48,7 @@ export function HistoryView() {
             <li key={s.id} className="flex items-center gap-3 py-2.5 text-sm">
               <span className="w-8 font-mono text-xs font-bold text-primary">{clubById(s.clubId)?.short}</span>
               <span className="flex-1 text-muted-foreground">
-                {new Date(s.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} · {s.shape}
+                {swingTime(s.at)} · {s.shape}
               </span>
               <span className="font-mono tabular-nums">{s.clubSpeedMph.toFixed(1)}</span>
               <span className="w-10 text-right font-mono text-muted-foreground tabular-nums">{s.score}</span>
@@ -58,6 +58,13 @@ export function HistoryView() {
       </Panel>
     </div>
   );
+}
+
+function swingTime(at: number): string {
+  const d = new Date(at);
+  const time = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  if (d.toDateString() === new Date().toDateString()) return time;
+  return `${d.toLocaleDateString([], { weekday: "short" })} ${time}`;
 }
 
 function SpeedTrend({ swings }: { swings: Swing[] }) {

@@ -75,7 +75,9 @@ function ConnectHero() {
             <BluetoothOffIcon className="mt-0.5 size-3.5 shrink-0" />
             {support === "insecure"
               ? "Bluetooth needs a secure (https) connection."
-              : "This browser can't use Bluetooth. Use Chrome or Edge on Android, macOS, Windows or ChromeOS, or Bluefy on iPhone."}
+              : support === "blocked"
+                ? "Bluetooth is turned off for this embedded page. Open PinPoint in its own tab in Chrome or Edge to connect a hub."
+                : "This browser can't use Bluetooth. Use Chrome or Edge on Android, macOS, Windows or ChromeOS, or Bluefy on iPhone."}
           </p>
         )}
       </div>

@@ -9,6 +9,7 @@ import {
   decodeTag,
   encodeSwing,
   encodeTag,
+  type SwingPacket,
 } from "./protocol";
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
@@ -113,29 +114,55 @@ export class DemoLink extends Emitter implements PinPointLink {
   }
 
   private swing() {
-    const club = clubById(this.activeClub) ?? CLUBS[0];
-    const [lo, hi] = club.typicalSpeedMph;
-    const putter = club.category === "putter";
-    // A typical amateur: slightly out-to-in, face a touch open.
-    const path = putter ? gauss() * 1.2 : -2.2 + gauss() * 3.5;
-    const face = putter ? gauss() * 1.5 : path + 1.8 + gauss() * 3.2;
-    const downswing = putter ? rand(380, 460) : rand(240, 300);
-    const tempo = putter ? rand(1.8, 2.2) : 3 + gauss() * 0.7;
-    const packet = encodeSwing({
-      version: PROTOCOL_VERSION,
-      clubId: club.id,
-      seq: ++this.seq,
-      clubSpeedMph: rand(lo, hi),
-      backswingMs: downswing * tempo,
-      downswingMs: downswing,
-      faceAngleDeg: face,
-      clubPathDeg: path,
-      attackAngleDeg:
-        club.category === "wood" && club.id === 1 ? 1 + gauss() * 3 : putter ? 1 + gauss() : -4 + gauss() * 2.5,
-      swingPlaneDeg: 90 - club.loftDeg * 0.2 - (club.category === "wood" ? 38 : 30) + gauss() * 3,
-      impactQuality: Math.max(20, Math.min(100, 78 + gauss() * 22)),
-      flags: SwingFlags.BallStruck,
-    });
+    const packet = encodeSwing(demoSwingPacket(this.activeClub, ++this.seq));
     this.emit("swing", decodeSwing(packet));
   }
+}
+
+// One plausible swing for a club, as a typical amateur would hit it: path a
+// little out-to-in, face a touch open.
+export function demoSwingPacket(clubId: number, seq: number): SwingPacket {
+  const club = clubById(clubId) ?? CLUBS[0];
+  const [lo, hi] = club.typicalSpeedMph;
+  const putter = club.category === "putter";
+  const path = putter ? gauss() * 1.2 : -2.2 + gauss() * 3.5;
+  const face = putter ? gauss() * 1.5 : path + 1.8 + gauss() * 3.2;
+  const downswing = putter ? rand(380, 460) : rand(240, 300);
+  const tempo = putter ? rand(1.8, 2.2) : 3 + gauss() * 0.7;
+  return {
+    version: PROTOCOL_VERSION,
+    clubId: club.id,
+    seq,
+    clubSpeedMph: rand(lo, hi),
+    backswingMs: downswing * tempo,
+    downswingMs: downswing,
+    faceAngleDeg: face,
+    clubPathDeg: path,
+    attackAngleDeg:
+      club.category === "wood" && club.id === 1 ? 1 + gauss() * 3 : putter ? 1 + gauss() : -4 + gauss() * 2.5,
+    swingPlaneDeg: 90 - club.loftDeg * 0.2 - (club.category === "wood" ? 38 : 30) + gauss() * 3,
+    impactQuality: Math.max(20, Math.min(100, 78 + gauss() * 22)),
+    flags: SwingFlags.BallStruck,
+  };
+}
+
+// A few practice sessions from the past week, so a first-time demo has history
+// to look at. Newest first, like the app's own list.
+export function demoHistory(now = Date.now()): { packet: SwingPacket; at: number }[] {
+  const sessions = [
+    { daysAgo: 6, clubs: [10, 9, 7, 7, 5, 1, 1, 1] },
+    { daysAgo: 3, clubs: [11, 10, 8, 7, 6, 3, 2, 1, 1] },
+    { daysAgo: 1, clubs: [10, 9, 8, 7, 7, 6, 5, 3, 2, 1, 1, 1] },
+  ];
+  const out: { packet: SwingPacket; at: number }[] = [];
+  let seq = 0;
+  for (const { daysAgo, clubs } of sessions) {
+    const start = now - daysAgo * 86_400_000 - 2 * 3_600_000;
+    clubs.forEach((clubId, i) => {
+      // Encode/decode so the rounding matches what a real hub sends.
+      const packet = decodeSwing(encodeSwing(demoSwingPacket(clubId, ++seq)));
+      out.push({ packet, at: start + i * 150_000 });
+    });
+  }
+  return out.reverse();
 }

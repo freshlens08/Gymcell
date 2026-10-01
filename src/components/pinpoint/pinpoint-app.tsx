@@ -19,9 +19,9 @@ const TABS: { id: Tab; label: string; icon: typeof HomeIcon }[] = [
   { id: "history", label: "History", icon: HistoryIcon },
 ];
 
-export function PinPointApp() {
+export function PinPointApp({ autoDemo = false }: { autoDemo?: boolean }) {
   return (
-    <PinPointProvider>
+    <PinPointProvider autoDemo={autoDemo}>
       <Shell />
     </PinPointProvider>
   );

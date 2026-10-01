@@ -7,7 +7,7 @@ import { toSwing, type Swing } from "@/lib/pinpoint/analysis";
 import { clubById } from "@/lib/pinpoint/clubs";
 import { BluetoothLink, type LinkStatus, type PinPointLink } from "@/lib/pinpoint/link";
 import { ControlOp, type TagPacket } from "@/lib/pinpoint/protocol";
-import { DemoLink } from "@/lib/pinpoint/simulator";
+import { DemoLink, demoHistory } from "@/lib/pinpoint/simulator";
 
 export interface TagState extends TagPacket {
   seenAt: number;
@@ -46,7 +46,9 @@ function loadSwings(): Swing[] {
   }
 }
 
-export function PinPointProvider({ children }: { children: React.ReactNode }) {
+// autoDemo starts the demo hub on load and fills an empty history with example
+// sessions. Used where real Bluetooth isn't available, like a hosted preview.
+export function PinPointProvider({ children, autoDemo = false }: { children: React.ReactNode; autoDemo?: boolean }) {
   const linkRef = useRef<PinPointLink | null>(null);
   const [status, setStatus] = useState<LinkStatus>("disconnected");
   const [kind, setKind] = useState<PinPointLink["kind"] | null>(null);
@@ -62,10 +64,12 @@ export function PinPointProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Hydrate from storage after mount to keep server and client markup identical.
+    const stored = loadSwings();
+    const seeded = autoDemo && stored.length === 0 ? demoHistory().map((h) => toSwing(h.packet, h.at)) : stored;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSwings(loadSwings());
+    setSwings(seeded);
     loaded.current = true;
-  }, []);
+  }, [autoDemo]);
 
   useEffect(() => {
     if (!loaded.current) return;
@@ -118,6 +122,12 @@ export function PinPointProvider({ children }: { children: React.ReactNode }) {
       }
     }
   }, []);
+
+  useEffect(() => {
+    // Connecting is the external system this effect syncs with.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (autoDemo) void connect("demo");
+  }, [autoDemo, connect]);
 
   const disconnect = useCallback(() => {
     linkRef.current?.disconnect();

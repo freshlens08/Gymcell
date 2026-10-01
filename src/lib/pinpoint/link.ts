@@ -54,10 +54,14 @@ export class Emitter {
   }
 }
 
-export function bluetoothSupport(): "supported" | "unsupported" | "insecure" {
+export function bluetoothSupport(): "supported" | "unsupported" | "insecure" | "blocked" {
   if (typeof window === "undefined") return "unsupported";
   if (!window.isSecureContext) return "insecure";
-  return navigator.bluetooth ? "supported" : "unsupported";
+  if (!navigator.bluetooth) return "unsupported";
+  // Embedded pages (iframes) can have Bluetooth switched off by the host.
+  const policy = (document as Document & { featurePolicy?: { allowsFeature(f: string): boolean } }).featurePolicy;
+  if (policy && !policy.allowsFeature("bluetooth")) return "blocked";
+  return "supported";
 }
 
 export class BluetoothLink extends Emitter implements PinPointLink {
